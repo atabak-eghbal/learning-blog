@@ -14,6 +14,10 @@ tags: [binary-search, invariants]
 - “Answer is in [l, r]”
 - “l is always false, r is always true” (first-true pattern)
 
+
+
+![Binary Search Diagram]({{ "/assets/images/dsa/binary-search.png" | relative_url }})
+
 ## Pitfalls
 - Infinite loops from wrong mid update
 - Using `mid = (l+r)/2` without thinking about rounding direction

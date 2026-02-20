@@ -13,6 +13,10 @@ tags: [two-pointers, patterns]
 ## Intuition
 Move pointers based on a condition so you never “re-check” work.
 
+
+
+![Two Pointers Diagram]({{ "/assets/images/dsa/two-pointers.png" | relative_url }})
+
 ## Steps
 1. Initialize `l = 0`, `r = n-1` (or slow/fast).
 2. While `l < r`, evaluate condition.

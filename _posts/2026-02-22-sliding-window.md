@@ -13,6 +13,10 @@ tags: [sliding-window, patterns]
 ## Core idea
 Keep a running state (sum, counts, max freq) so updates are O(1) per move.
 
+
+
+![Sliding Window Diagram]({{ "/assets/images/dsa/sliding-window.png" | relative_url }})
+
 ## Steps
 1. Expand `r` to include new element.
 2. While invalid, shrink from `l`.

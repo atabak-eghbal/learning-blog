@@ -9,6 +9,9 @@ baseurl: "/learning-blog"
 # Nice URLs
 permalink: /:categories/:title/
 
+# Show future-dated posts
+future: true
+
 author: "Atabak Eghbal"
 
 header_pages:

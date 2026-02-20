@@ -1,0 +1,23 @@
+title: "Atabak’s Learning Blog"
+description: "DSA • System Design • Math • ML Fundamentals • MLOps • AI Engineering • Agentic AI • Projects"
+theme: minima
+
+# Project-site settings
+url: "https://atabak-eghbal.github.io"
+baseurl: "/learning-blog"
+
+# Nice URLs
+permalink: /:categories/:title/
+
+author: "Atabak Eghbal"
+
+header_pages:
+  - dsa.md
+  - system-design.md
+  - math.md
+  - ml-fundamentals.md
+  - mlops.md
+  - ai-engineering.md
+  - agentic-ai.md
+  - projects.md
+  - about.md

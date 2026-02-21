@@ -114,3 +114,68 @@ print(result["messages"][-1].content)
 2. Why is it better to call a math tool than to ask the LLM to do arithmetic directly?
 3. In LangGraph, what determines which node runs next?
 4. What does the "Re" and "Act" in *ReAct* stand for?
+
+---
+
+## Building Custom Tools
+
+### Use Case: Calculating Square Footage
+
+Real estate agency staff may need to calculate the square footage of rectangular one-bed apartments. We can build a math tool using the lengths of the sides of the apartment, supplied via casual, natural language.
+
+By default, LangChain accepts such natural language queries as strings. Internally, it uses the LLM to extract the necessary input from the query — for example, LangChain might extract the two numbers `"5"` and `"7"` as string inputs representing rectangle lengths before performing calculations.
+
+### Creating a math tool
+
+```python
+from langchain_core.tools import tool
+from langchain_openai import ChatOpenAI
+from langgraph.prebuilt import create_react_agent
+
+# Use the @tool decorator so LangChain recognises this function as a tool
+@tool
+def rectangle_area(measurements: str) -> float:
+    """Calculate the area of a rectangle given the lengths of two sides, a and b."""
+    a, b = measurements.split(",")
+    return float(a.strip()) * float(b.strip())
+```
+
+The `@tool` decorator tells LangChain to treat `rectangle_area` as an agent tool. The function:
+- Accepts a **string** extracted from the natural language query
+- Splits the string into the two side lengths `a` and `b`
+- Uses `.strip()` to remove any surrounding whitespace before converting each to a `float`
+- Returns the computed area
+
+### Tools and query setup
+
+```python
+# LLM setup
+model = ChatOpenAI()
+
+# Make the tool available to the agent
+tools = [rectangle_area]
+
+# Natural language query — could come from a real estate chatbot
+query = "What is the area of a rectangular apartment with sides 5 and 7 meters?"
+
+# Build the ReAct agent
+app = create_react_agent(model, tools)
+
+# Invoke the agent and print its response
+result = app.invoke({"messages": [("user", query)]})
+print(result["messages"][-1].content)
+```
+
+Although only one tool is listed here, you can add as many tools as your workflow requires.
+
+### Pre-built and custom tools
+
+LangChain also ships an extensive library of **pre-built tools** for common problems:
+
+| Category | Examples |
+|----------|---------|
+| **Database** | SQL query, vector store retrieval |
+| **Web** | Web scraping, search engines |
+| **Media** | Image generation |
+
+Refer to [LangChain's API guide](https://python.langchain.com/docs/integrations/tools/) for available pre-built tools, and to the [tool decorator guide](https://python.langchain.com/docs/how_to/custom_tools/) for building additional custom tools.

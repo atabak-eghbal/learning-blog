@@ -139,9 +139,70 @@ print(result["messages"][-1].content)
 
 ---
 
+## Streaming Graph Events
+
+In LangGraph, **streaming events** from a graph lets us process steps in an agent's workflow in real time. Each event represents a single step in the graph — such as generating a response or calling a tool — making it possible to track the chatbot agent's progress and display responses as soon as they are ready.
+
+---
+
+## Streaming LLM Responses
+
+To stream responses, define a `stream_graph_updates()` function that accepts a `user_input` string and calls the `.stream()` method on the compiled graph:
+
+```python
+def stream_graph_updates(user_input: str):
+    for event in graph.stream({"messages": [("user", user_input)]}):
+        for value in event.values():
+            print(value["messages"])
+
+stream_graph_updates('Who is Mary Shelley?')
+```
+
+| Step | Description |
+|------|-------------|
+| `.stream()` | Runs the graph and yields one event per step |
+| `event.values()` | Retrieves the chatbot's output from each step |
+| `value["messages"]` | Prints the response as soon as it is ready |
+
+Since the chatbot currently has no tools, it uses the LLM's knowledge base directly. The response is returned inside an `AIMessage` object with a `content` field and `response_metadata` that includes the name of the model used.
+
+---
+
+## LLMs and Hallucinations
+
+Even powerful LLMs can produce **hallucinations** — plausible-sounding but incorrect statements. Always verify claims against original sources. For example, an LLM might incorrectly name a famous person's child; cross-checking with a reliable source will reveal the error.
+
+---
+
+## Generating a LangGraph Diagram
+
+LangGraph can render a visual diagram of the graph's nodes and edges using Mermaid:
+
+```python
+from IPython.display import Image, display
+
+try:
+    display(Image(graph.get_graph().draw_mermaid_png()))
+except Exception:
+    print("Additional dependencies are required for Python visualization in this environment.")
+```
+
+| Step | Description |
+|------|-------------|
+| `.get_graph()` | Retrieves the graph's structure |
+| `.draw_mermaid_png()` | Renders the structure as a PNG diagram |
+| `Image()` / `display()` | Shows the diagram in the notebook |
+
+The `try`/`except` block handles environments where visualization dependencies are not installed.
+
+---
+
 ## Mini-quiz
 
 1. What is the difference between a **node** and an **edge** in LangGraph?
 2. Why does `State` use `Annotated[list, add_messages]` instead of a plain `list`?
 3. What role does `StateGraph` play, and when do you call `.compile()`?
 4. Which two nodes are imported directly from LangGraph to mark workflow boundaries?
+5. What does each event represent when streaming from a LangGraph graph?
+6. Why should you always verify LLM responses against original sources?
+7. Which method renders the graph structure as a visual diagram, and which method retrieves its structure?

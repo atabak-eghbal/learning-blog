@@ -215,59 +215,97 @@ Now it's time to try it yourself! Practice streaming responses from your chatbot
 
 ---
 
-## Transcript
+## Adding External Tools to a Chatbot
 
-### 1. Adding external tools to a chatbot
-**00:00 - 00:05**
+External API tools augment chatbot agents by enabling access to resources beyond the LLM's training data — such as news sites, databases, and social media platforms. Adding tools transforms a basic chatbot into an agent that can fetch up-to-date, accurate information on demand.
 
-Now that you're familiar with basic chatbots, let's try incorporating an
+---
 
-### 2. External tools with LangGraph
-**00:05 - 00:23**
+## Adding a Wikipedia Tool
 
-external API tool into our chatbot. Tools with API capabilities help augment chatbot agents by enabling access to external resources, such as news sites, databases, social media, and many others.
+LangGraph makes it straightforward to give a chatbot access to Wikipedia using two modules from LangChain:
 
-### 3. Adding a Wikipedia tool
-**00:23 - 00:30**
+| Module | Purpose |
+|--------|---------|
+| `WikipediaAPIWrapper` | Interacts with the Wikipedia API |
+| `WikipediaQueryRun` | Wraps the API as a runnable tool for queries |
 
-Using LangGraph, let's expand our education chatbot's knowledge by including a Wikipedia API.
+```python
+from langchain_community.utilities import WikipediaAPIWrapper
+from langchain_community.tools import WikipediaQueryRun
 
-### 4. Adding a Wikipedia tool
-**00:30 - 01:17**
+# Initialise the wrapper, limiting results for relevance
+api_wrapper = WikipediaAPIWrapper(top_k_results=1)
 
-We'll start with two modules. WikipediaAPIWrapper allows us to interact with the Wikipedia API, while WikipediaQueryRun makes the API a tool for running queries. Next, we'll initialize WikipediaAPIWrapper, setting top_k_results to one to keep responses relevant. Then, we'll create wikipedia_tool with WikipediaQueryRun, passing in the api_wrapper to connect directly to Wikipedia and retrieve detailed information when needed. Finally, we'll store wikipedia_tool in a list called tools, which can hold multiple tools if required.
+# Create the tool and store it in a list (which can hold multiple tools)
+wikipedia_tool = WikipediaQueryRun(api_wrapper=api_wrapper)
+tools = [wikipedia_tool]
+```
 
-### 5. Adding a Wikipedia tool
-**01:17 - 01:57**
+- `top_k_results=1` keeps responses focused by returning only the most relevant Wikipedia article.
+- Storing the tool in a `tools` list makes it easy to scale to multiple tools later.
 
-We can bind our tools list to the language model using .bind_tools() and store it in a variable called llm_with_tools. Next, we'll update our original chatbot function to use llm_with_tools instead of llm, enabling responses from the Wikipedia tool when needed, rather than relying on the language model alone. This modified function passes the full conversation stored in "messages" to llm_with_tools, allowing the language model to decide when to pull information from Wikipedia to enhance its responses.
+---
 
-### 6. Other API tools
-**01:57 - 02:07**
+## Binding Tools to the LLM
 
-For more details on how to add different tools with external APIs, be sure to reference LangChain's API documentation.
+Once the tool is defined, bind it to the language model using `.bind_tools()`:
 
-### 7. Adding tool nodes
-**02:07 - 02:30**
+```python
+llm_with_tools = llm.bind_tools(tools)
 
-Now that we have our Wikipedia tool, the next modules imported for us, called ToolNode and tools_condition, will help us add the tool to our chatbot's graph. As with the basic chatbot, we'll start by adding our chatbot node labeled "chatbot" to the graph_builder using the .add_node() method.
+def chatbot(state: State):
+    """Generate a response, using Wikipedia when needed."""
+    return {"messages": [llm_with_tools.invoke(state["messages"])]}
+```
 
-### 8. Adding tool nodes
-**02:30 - 02:44**
+- `llm_with_tools` replaces `llm` in the chatbot function so the model can decide when to call Wikipedia.
+- The full conversation stored in `"messages"` is passed to `llm_with_tools`, allowing context-aware tool use.
+- For other external API integrations, refer to [LangChain's API documentation](https://python.langchain.com/docs/).
 
-Then we'll define a tool_node by passing in the wikipedia_tool to the tools argument in LangGraph's ToolNode() class, before adding this node labeled "tools" to the graph_builder.
+---
 
-### 9. Adding tool nodes
-**02:44 - 03:05**
+## Adding Tool Nodes
 
-Next, before adding an END node explicitly, we'll use the .add_conditional_edges() method with tools_condition to let the chatbot decide if a tool is needed. If it is, the chatbot will call a tool. If not, the chatbot will end without a response.
+To wire the Wikipedia tool into the graph, two additional imports are needed:
 
-### 10. Adding tool nodes
-**03:05 - 03:25**
+| Module | Purpose |
+|--------|---------|
+| `ToolNode` | Creates a graph node that executes one or more tools |
+| `tools_condition` | Conditional routing — routes to tools if needed, otherwise ends |
 
-For LLM or tool calls that generate a response, we'll connect "tools" back to the "chatbot" using the .add_edge() method, then add a START node which connects to the "chatbot", before finally connecting the "chatbot" to the added END node.
+```python
+from langgraph.prebuilt import ToolNode, tools_condition
 
-### 11. Let's practice!
-**03:25 - 03:30**
+# Add the chatbot node (as before)
+graph_builder.add_node("chatbot", chatbot)
 
-That was quite a lot to cover! Let's work in some practice!
+# Define and add the tool node
+tool_node = ToolNode(tools=tools)
+graph_builder.add_node("tools", tool_node)
+```
+
+### Connecting nodes with conditional edges
+
+```python
+# Let the chatbot decide whether to call a tool or end
+graph_builder.add_conditional_edges("chatbot", tools_condition)
+
+# Route tool responses back to the chatbot
+graph_builder.add_edge("tools", "chatbot")
+
+# Connect START to the chatbot
+graph_builder.add_edge(START, "chatbot")
+```
+
+| Step | Description |
+|------|-------------|
+| `add_conditional_edges("chatbot", tools_condition)` | Routes to `"tools"` if a tool call is needed; routes to END otherwise |
+| `add_edge("tools", "chatbot")` | Sends tool results back to the chatbot for a final response |
+| `add_edge(START, "chatbot")` | Begins the workflow at the chatbot node |
+
+---
+
+## Let's practice!
+
+Now it's time to try it yourself! Practice adding external tools to your chatbot and routing through tool nodes using conditional edges.

@@ -141,7 +141,7 @@ print(result["messages"][-1].content)
 
 ## Streaming Graph Events
 
-In LangGraph, **streaming events** from a graph lets us process steps in an agent's workflow in real time. Each event represents a single step in the graph — such as generating a response or calling a tool — making it possible to track the chatbot agent's progress and display responses as soon as they are ready.
+In LangGraph, **streaming events** from a graph lets us process steps in an agent's workflow in real time. Each event represents a single step in the graph — such as generating a response or calling a tool — making it possible to track the chatbot agent's progress and display responses as soon as they are ready. Streaming the graph returns multiple events, including the user's query, so you can see each step as it happens.
 
 ---
 
@@ -164,13 +164,13 @@ stream_graph_updates('Who is Mary Shelley?')
 | `event.values()` | Retrieves the chatbot's output from each step |
 | `value["messages"]` | Prints the response as soon as it is ready |
 
-Since the chatbot currently has no tools, it uses the LLM's knowledge base directly. The response is returned inside an `AIMessage` object with a `content` field and `response_metadata` that includes the name of the model used.
+Since the chatbot currently has no tools, it uses the LLM's knowledge base directly to answer the test query about Mary Shelley — the celebrated science fiction author of *Frankenstein*. The response is returned inside an `AIMessage` object with a `content` field containing the LLM's detailed answer, and `response_metadata` that includes the name of the model used to generate the response.
 
 ---
 
 ## LLMs and Hallucinations
 
-Even powerful LLMs can produce **hallucinations** — plausible-sounding but incorrect statements. Always verify claims against original sources. For example, an LLM might incorrectly name a famous person's child; cross-checking with a reliable source will reveal the error.
+Even powerful LLMs can produce **hallucinations** — plausible-sounding but incorrect statements. Always verify claims against original sources. For example, an LLM might incorrectly identify NASA engineer Judith Love Cohen's famous son as "Adam Cohen", when in fact it is Jack Black. Cross-checking with a reliable source will reveal the error.
 
 ---
 
@@ -194,6 +194,12 @@ except Exception:
 | `Image()` / `display()` | Shows the diagram in the notebook |
 
 The `try`/`except` block handles environments where visualization dependencies are not installed.
+
+---
+
+## Let's practice!
+
+Now it's time to try it yourself! Practice streaming responses from your chatbot and generating a diagram of your LangGraph graph.
 
 ---
 

@@ -212,3 +212,62 @@ Now it's time to try it yourself! Practice streaming responses from your chatbot
 5. What does each event represent when streaming from a LangGraph graph?
 6. Why should you always verify LLM responses against original sources?
 7. Which method renders the graph structure as a visual diagram, and which method retrieves its structure?
+
+---
+
+## Transcript
+
+### 1. Adding external tools to a chatbot
+**00:00 - 00:05**
+
+Now that you're familiar with basic chatbots, let's try incorporating an
+
+### 2. External tools with LangGraph
+**00:05 - 00:23**
+
+external API tool into our chatbot. Tools with API capabilities help augment chatbot agents by enabling access to external resources, such as news sites, databases, social media, and many others.
+
+### 3. Adding a Wikipedia tool
+**00:23 - 00:30**
+
+Using LangGraph, let's expand our education chatbot's knowledge by including a Wikipedia API.
+
+### 4. Adding a Wikipedia tool
+**00:30 - 01:17**
+
+We'll start with two modules. WikipediaAPIWrapper allows us to interact with the Wikipedia API, while WikipediaQueryRun makes the API a tool for running queries. Next, we'll initialize WikipediaAPIWrapper, setting top_k_results to one to keep responses relevant. Then, we'll create wikipedia_tool with WikipediaQueryRun, passing in the api_wrapper to connect directly to Wikipedia and retrieve detailed information when needed. Finally, we'll store wikipedia_tool in a list called tools, which can hold multiple tools if required.
+
+### 5. Adding a Wikipedia tool
+**01:17 - 01:57**
+
+We can bind our tools list to the language model using .bind_tools() and store it in a variable called llm_with_tools. Next, we'll update our original chatbot function to use llm_with_tools instead of llm, enabling responses from the Wikipedia tool when needed, rather than relying on the language model alone. This modified function passes the full conversation stored in "messages" to llm_with_tools, allowing the language model to decide when to pull information from Wikipedia to enhance its responses.
+
+### 6. Other API tools
+**01:57 - 02:07**
+
+For more details on how to add different tools with external APIs, be sure to reference LangChain's API documentation.
+
+### 7. Adding tool nodes
+**02:07 - 02:30**
+
+Now that we have our Wikipedia tool, the next modules imported for us, called ToolNode and tools_condition, will help us add the tool to our chatbot's graph. As with the basic chatbot, we'll start by adding our chatbot node labeled "chatbot" to the graph_builder using the .add_node() method.
+
+### 8. Adding tool nodes
+**02:30 - 02:44**
+
+Then we'll define a tool_node by passing in the wikipedia_tool to the tools argument in LangGraph's ToolNode() class, before adding this node labeled "tools" to the graph_builder.
+
+### 9. Adding tool nodes
+**02:44 - 03:05**
+
+Next, before adding an END node explicitly, we'll use the .add_conditional_edges() method with tools_condition to let the chatbot decide if a tool is needed. If it is, the chatbot will call a tool. If not, the chatbot will end without a response.
+
+### 10. Adding tool nodes
+**03:05 - 03:25**
+
+For LLM or tool calls that generate a response, we'll connect "tools" back to the "chatbot" using the .add_edge() method, then add a START node which connects to the "chatbot", before finally connecting the "chatbot" to the added END node.
+
+### 11. Let's practice!
+**03:25 - 03:30**
+
+That was quite a lot to cover! Let's work in some practice!

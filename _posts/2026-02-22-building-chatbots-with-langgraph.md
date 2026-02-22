@@ -309,3 +309,129 @@ graph_builder.add_edge(START, "chatbot")
 ## Let's practice!
 
 Now it's time to try it yourself! Practice adding external tools to your chatbot and routing through tool nodes using conditional edges.
+
+---
+
+## Adding Memory and Conversation
+
+Before adding memory to support multi-turn conversations, we first need to test the tool integration. Once confirmed, memory will enable the chatbot to maintain context across a series of exchanges rather than treating each query in isolation.
+
+---
+
+## Testing Tool Use
+
+To verify the tool integration, we define a streaming function called `stream_tool_responses` that runs the graph and checks whether the Wikipedia tool was correctly invoked:
+
+```python
+def stream_tool_responses(user_input: str):
+    for event in graph.stream({"messages": [("user", user_input)]}):
+        for value in event.values():
+            # Access messages stored in the chatbot's events
+            # and check which tools are referenced
+            if "messages" in value:
+                print(value["messages"][-1])
+
+stream_tool_responses("House of Lords")
+```
+
+| Step | Description |
+|------|-------------|
+| `graph.stream()` | Streams each step of the graph as an event |
+| `event.values()` | Retrieves the output produced at each step |
+| `value["messages"][-1]` | Prints the most recent message from each step |
+
+The test query `"House of Lords"` is passed to verify that the chatbot correctly routes to the Wikipedia tool.
+
+---
+
+## Visualizing the Diagram
+
+After adding the tools node, the Mermaid diagram reflects the updated graph. All nodes and edges are correctly implemented, capturing every possible conversation outcome:
+
+- **START → Chatbot** — entry point
+- **Chatbot → Tools** — taken when a tool call is required
+- **Tools → Chatbot** — returns tool results for the chatbot to process
+- **Chatbot → END** — taken when no tool call is needed
+
+This confirms that the conditional routing introduced by `tools_condition` is wired up correctly.
+
+---
+
+## Streaming the Output
+
+The abbreviated streaming output demonstrates the full tool-use cycle:
+
+1. **User query** — the test message `"House of Lords"` is passed to the chatbot.
+2. **Tool call** — the metadata field `"name"` confirms the Wikipedia tool was invoked.
+3. **Tool response** — a summary generated from the House of Lords Wikipedia page is returned.
+4. **Final answer** — the LLM refines the Wikipedia summary to improve clarity and coherence, with additional details appearing in the `response_metadata` field.
+
+Rather than responding independently to unrelated queries, the chatbot now grounds its answers in retrieved information — setting the stage for adding conversational memory.
+
+---
+
+## Adding Memory
+
+To enable multi-turn conversations, we add a memory checkpoint to the graph using LangGraph's built-in `MemorySaver`:
+
+```python
+from langgraph.checkpoint.memory import MemorySaver
+
+# Create a memory checkpoint instance
+memory = MemorySaver()
+
+# Compile the graph with the memory checkpoint
+graph = graph_builder.compile(checkpointer=memory)
+```
+
+| Step | Description |
+|------|-------------|
+| `MemorySaver` | Handles in-memory storage of conversation checkpoints |
+| `memory` | The checkpoint instance passed to the compiled graph |
+| `compile(checkpointer=memory)` | Compiles the graph so it retains conversation context between turns |
+
+---
+
+## Streaming Outputs with Memory
+
+To stream responses while preserving conversation context, define a function called `stream_memory_responses` that uses a `config` dictionary to identify a session:
+
+```python
+def stream_memory_responses(user_input: str):
+    config = {"configurable": {"thread_id": "single_session_memory"}}
+    for event in graph.stream(
+        {"messages": [("user", user_input)]},
+        config
+    ):
+        for value in event.values():
+            if "messages" in value:
+                print(value["messages"][-1].content)
+
+stream_memory_responses("Tell me about the Colosseum.")
+stream_memory_responses("Who built it?")
+```
+
+| Component | Description |
+|-----------|-------------|
+| `thread_id` | Unique identifier that ties messages to a single conversation session |
+| `config` | Passed to `.stream()` alongside the user's message |
+| `value["messages"][-1].content` | Extracts and prints the agent's latest response |
+
+The same `thread_id` is reused across calls so the chatbot can answer follow-up questions with full context from earlier in the conversation.
+
+---
+
+## Generating Output with Memory
+
+The conversation unfolds across two turns:
+
+1. **First query** — the chatbot processes `"Tell me about the Colosseum."`, calls the Wikipedia tool, and returns a summary describing the Colosseum as Rome's largest ancient amphitheater.
+2. **Follow-up query** — when asked `"Who built it?"`, the chatbot answers using the same session context, explaining that the Colosseum was built by Emperor Vespasian for gladiatorial events.
+
+Because the session config is shared, the chatbot correctly interprets `"it"` as referring to the Colosseum from the previous turn. The follow-up response also notes that construction was completed under Titus and that further modifications were made under Domitian.
+
+---
+
+## Let's practice!
+
+Nice work! Now it's time to try it yourself! Practice having multi-turn conversations with your chatbot agent by adding memory and testing follow-up questions.
